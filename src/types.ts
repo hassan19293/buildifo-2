@@ -1,72 +1,53 @@
-export interface Project {
+export type CursorState = 'default' | 'view' | 'inspect' | 'enter' | 'close' | 'drag';
+
+export interface ChapterMeta {
   id: string;
   number: string;
+  name: string;
+  material: string;
+  lightSource: string;
+}
+
+export interface ProjectData {
+  id: string;
   title: string;
-  category: string;
-  tagline: string;
-  description: string;
   client: string;
   year: string;
-  deliverables: string[];
-  metrics: {
-    label: string;
-    value: string;
-  }[];
-  heroImage: string;
-  accentColor: string;
-  liveUrl?: string;
-  states?: {
-    stage: string;
-    title: string;
-    description: string;
-    type: 'wireframe' | 'ui' | 'mobile' | 'final';
-  }[];
-}
-
-export interface ServiceItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  tags: string[];
-  features: string[];
-  type: 'saas' | 'web' | 'mobile' | 'video' | 'design' | 'ai';
-  deliverables: string;
-}
-
-export interface ProcessStep {
-  number: string;
-  title: string;
-  subtitle: string;
-  duration: string;
-  description: string;
-  deliverables: string[];
-  details: string[];
-}
-
-export interface StatItem {
-  id: string;
-  value: number;
-  suffix: string;
-  prefix?: string;
-  label: string;
-  description: string;
-}
-
-export interface Testimonial {
-  id: string;
-  quote: string;
-  author: string;
+  discipline: string;
   role: string;
-  company: string;
-  avatar: string;
-  metrics: string;
-  service: string;
+  accentColor: string;
+  heroImage: string;
+  secondaryImage: string;
+  detailImage: string;
+  summary: string;
+  challenge: string;
+  solution: string;
+  dimensions?: string;
+  materials?: string;
+  stats?: { label: string; value: string }[];
+  tags: string[];
 }
 
-export interface FAQItem {
+export interface SystemLayerData {
   id: string;
-  question: string;
-  answer: string;
+  index: string;
+  name: string;
   category: string;
+  materialFinish: string;
+  description: string;
+  architectureNotes: string;
+  specs: { label: string; value: string }[];
+  telemetryStream: { metric: string; status: string; value: string }[];
+}
+
+export interface ProcessStageData {
+  id: string;
+  step: string;
+  title: string;
+  materialTone: string;
+  artifactType: string;
+  fieldNotes: string;
+  sketchUrl: string;
+  physicalAction: string;
+  annotations: string[];
 }

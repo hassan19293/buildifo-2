@@ -2,105 +2,109 @@
 
 @layer base {
   :root {
-    --font-display: 'Syne', sans-serif;
-    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-    --color-accent: #FF4E00;
+    --bg-primary: #080808;
+    --bg-paper: #F5F3EE;
+    --text-primary: #080808;
+    --text-light: #F5F3EE;
+    --text-muted: #A6A39B;
+    --signal-green: #C8FF00;
+  }
+
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    font-family: var(--font-body);
-    background-color: #050505;
-    color: #F3F4F6;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #080808;
+    color: #F5F3EE;
+    letter-spacing: -0.01em;
   }
 
-  h1, h2, h3, .font-display {
-    font-family: var(--font-display);
+  h1, h2, h3, .font-display, .big-shoulders {
+    font-family: 'Big Shoulders Display', sans-serif;
   }
 
-  code, pre, .font-mono {
-    font-family: var(--font-mono);
+  .inter {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-mono-tech {
+    font-family: 'JetBrains Mono', 'Inter', monospace;
   }
 }
 
-/* Custom smooth scrollbar */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 7px;
+  width: 4px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #050505;
+  background: #080808;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
-  border: 2px solid #050505;
+  background: #262422;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 78, 0, 0.6);
+  background: #3d3a36;
 }
 
-/* Frosted Glass Utilities */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+/* Editorial Aesthetic specific utility classes */
+.concrete-mask {
+  background-color: #A6A39B;
+  clip-path: polygon(0 0, 100% 15%, 85% 100%, 0% 100%);
 }
 
-.glass-panel-elevated {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+.concrete-mask-alt {
+  clip-path: polygon(15% 0, 100% 0%, 100% 85%, 0% 100%);
 }
 
-.glass-button {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+.shadow-directional {
+  box-shadow: 40px 40px 80px rgba(0,0,0,0.06);
 }
 
-.glass-button:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
+.shadow-editorial {
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25), 0 18px 36px -18px rgba(0, 0, 0, 0.3);
 }
 
-/* Depth perspective classes */
-.perspective-1000 {
-  perspective: 1000px;
+.line-architectural {
+  background: #080808;
+  height: 1px;
+  opacity: 0.12;
 }
 
-.perspective-2000 {
-  perspective: 2000px;
+.line-architectural-light {
+  background: #F5F3EE;
+  height: 1px;
+  opacity: 0.15;
 }
 
-.transform-style-3d {
-  transform-style: preserve-3d;
+/* Subtle physical paper/concrete noise texture */
+.paper-grain {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 0);
+  background-size: 16px 16px;
 }
 
-.backface-hidden {
-  backface-visibility: hidden;
+.paper-grid {
+  background-image: radial-gradient(#080808 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-/* Subtle glow animations */
-@keyframes ambientPulse {
-  0%, 100% {
-    opacity: 0.25;
-    transform: scale(1) translate(0, 0);
-  }
-  50% {
-    opacity: 0.45;
-    transform: scale(1.1) translate(20px, -15px);
-  }
+.concrete-grain {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+  background-size: 12px 12px;
 }
 
-.animate-ambient-glow {
-  animation: ambientPulse 14s ease-in-out infinite alternate;
+/* Hide scrollbar for clean horizontal scroll areas */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 

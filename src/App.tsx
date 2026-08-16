@@ -1,176 +1,212 @@
-import React, { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
-import { HeroSection } from './components/HeroSection';
-import { SocialProofSection } from './components/SocialProofSection';
-import { SelectedWorkSection } from './components/SelectedWorkSection';
-import { ProjectStickyTransition } from './components/ProjectStickyTransition';
-import { ServicesSection } from './components/ServicesSection';
-import { SaaSShowcaseSection } from './components/SaaSShowcaseSection';
-import { WebShowcaseSection } from './components/WebShowcaseSection';
-import { MobileShowcaseSection } from './components/MobileShowcaseSection';
-import { VideoShowcaseSection } from './components/VideoShowcaseSection';
-import { UIUXShowcaseSection } from './components/UIUXShowcaseSection';
-import { ProcessSection } from './components/ProcessSection';
-import { TechnologySection } from './components/TechnologySection';
-import { WhyUsSection } from './components/WhyUsSection';
-import { StatsSection } from './components/StatsSection';
-import { TestimonialsSection } from './components/TestimonialsSection';
-import { AboutSection } from './components/AboutSection';
-import { FAQSection } from './components/FAQSection';
-import { ContactSection } from './components/ContactSection';
-import { FinalCTASection } from './components/FinalCTASection';
-import { Footer } from './components/Footer';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { ChapterMeta, CursorState, ProjectData } from './types';
+import { Cursor } from './components/Cursor';
+import { Navigation } from './components/Navigation';
+import { Global3DWorld } from './components/Global3DWorld';
+import { Chapter01Arrival } from './components/Chapter01Arrival';
+import { Chapter02Reveal } from './components/Chapter02Reveal';
+import { Chapter03Work } from './components/Chapter03Work';
+import { Chapter04System } from './components/Chapter04System';
+import { Chapter05Studio } from './components/Chapter05Studio';
+import { Chapter06Approach } from './components/Chapter06Approach';
+import { Chapter07Invitation } from './components/Chapter07Invitation';
 import { ProjectModal } from './components/ProjectModal';
-import { StartProjectModal } from './components/StartProjectModal';
-import { MotionHUD } from './components/MotionHUD';
-import { Project } from './types';
+import { ContactDrawer } from './components/ContactDrawer';
+import { soundEngine } from './utils/soundEngine';
+
+const CHAPTERS: ChapterMeta[] = [
+  { id: 'arrival', number: '01', name: 'ARRIVAL', material: 'BLACKENED STEEL & CONCRETE', lightSource: 'DOORWAY SUNLIGHT' },
+  { id: 'reveal', number: '02', name: 'REVEAL', material: 'PAPER, PLASTER & LINEN', lightSource: 'DIFFUSE DAYLIGHT' },
+  { id: 'work', number: '03', name: 'WORK', material: 'CHARCOAL & STONE PLINTHS', lightSource: 'GALLERY SPOTLIGHTS' },
+  { id: 'system', number: '04', name: 'SYSTEM', material: 'BRUSHED TITANIUM & STEEL', lightSource: 'OVERHEAD WORKSHOP LAMP' },
+  { id: 'studio', number: '05', name: 'STUDIO', material: 'OILED OAK & BOOKS', lightSource: 'WARM TABLE LAMP' },
+  { id: 'approach', number: '06', name: 'APPROACH', material: 'PINNED PAPER & CORK WALL', lightSource: 'SOFT DAYLIGHT' },
+  { id: 'invitation', number: '07', name: 'INVITATION', material: 'ARCHITECTURAL GLASS', lightSource: 'OPEN EXTERIOR DAYLIGHT' },
+];
 
 export default function App() {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [isContactOpen, setIsContactOpen] = useState<boolean>(false);
-  const [activeSection, setActiveSection] = useState<string>('hero');
+  const [activeChapterIndex, setActiveChapterIndex] = useState(0);
+  const [cursorState, setCursorStateInternal] = useState<CursorState>('default');
+  const [cursorText, setCursorText] = useState<string | undefined>(undefined);
+  const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
-  // Track active section for navigation highlighting
+  // 3D Continuous Navigation & Interactive States
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [pointer, setPointer] = useState({ x: 0, y: 0 });
+  const [activeSystemLayerIndex, setActiveSystemLayerIndex] = useState(0);
+  const [hoveredProjectIndex, setHoveredProjectIndex] = useState<number | null>(null);
+
+  const tickingRef = useRef(false);
+
+  const setCursor = useCallback((state: CursorState, text?: string) => {
+    setCursorStateInternal(state);
+    setCursorText(text);
+  }, []);
+
+  const handleToggleMute = useCallback(() => {
+    soundEngine.isMuted = !soundEngine.isMuted;
+    setIsMuted(soundEngine.isMuted);
+  }, []);
+
+  const scrollToSection = useCallback((id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  // Global Page Scroll Progress calculation for 3D Camera Travel
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['hero', 'work', 'evolution', 'services', 'showcases', 'process', 'tech', 'why', 'stats', 'testimonials', 'about', 'faq', 'contact'];
-      const scrollPos = window.scrollY + 200;
-
-      for (const sectionId of sections) {
-        const el = document.getElementById(sectionId);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPos >= top && scrollPos < top + height) {
-            setActiveSection(sectionId);
-            break;
-          }
-        }
+      if (!tickingRef.current) {
+        requestAnimationFrame(() => {
+          const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+          const current = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+          setScrollProgress(Math.min(1, Math.max(0, current)));
+          tickingRef.current = false;
+        });
+        tickingRef.current = true;
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleScrollToWork = () => {
-    const el = document.getElementById('work');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  // Global Mouse Coordinate Tracking for 3D Parallax Tilt
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = -(e.clientY / window.innerHeight) * 2 + 1;
+      setPointer({ x, y });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Intersection observer to track active chapter and material wayfinding
+  useEffect(() => {
+    const observerOptions: IntersectionObserverInit = {
+      root: null,
+      rootMargin: '-30% 0px -40% 0px',
+      threshold: 0.1,
+    };
+
+    const handleIntersect: IntersectionObserverCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const matchedIdx = CHAPTERS.findIndex((c) => c.id === entry.target.id);
+          if (matchedIdx !== -1) {
+            setActiveChapterIndex(matchedIdx);
+          }
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(handleIntersect, observerOptions);
+
+    CHAPTERS.forEach((ch) => {
+      const el = document.getElementById(ch.id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#F3F4F6] relative selection:bg-[#FF4E00] selection:text-white font-sans overflow-x-hidden">
-      
-      {/* Frosted Glass Global Ambient Backdrop Orbs */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Top-Right Electric Amber/Orange Glow */}
-        <div className="absolute -top-32 -right-32 w-[550px] sm:w-[750px] h-[550px] sm:h-[750px] bg-[#FF4E00]/10 rounded-full blur-[160px] animate-ambient-glow" />
-        {/* Deep Ember Top-Left Warmth */}
-        <div className="absolute top-1/4 -left-40 w-[600px] h-[600px] bg-[#221008]/40 rounded-full blur-[150px]" />
-        {/* Midnight Sapphire Center Glow */}
-        <div className="absolute top-2/3 right-1/4 w-[700px] h-[700px] bg-[#0A1229]/50 rounded-full blur-[180px]" />
-        {/* Subtle Grid Overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:32px_32px] opacity-40" />
-      </div>
-
-      {/* SECTION 01: Top Navigation Bar */}
-      <Navbar
-        onOpenContact={() => setIsContactOpen(true)}
-        activeSection={activeSection}
+    <div className="relative min-h-screen bg-[#080808] text-[#F5F3EE]">
+      {/* PERSISTENT CINEMATIC 3D WORLD CANVAS (Underlays all 7 chapters) */}
+      <Global3DWorld
+        scrollProgress={scrollProgress}
+        activeChapterIndex={activeChapterIndex}
+        activeSystemLayerIndex={activeSystemLayerIndex}
+        hoveredProjectIndex={hoveredProjectIndex}
+        pointerX={pointer.x}
+        pointerY={pointer.y}
       />
 
+      {/* Magnetic Art-Directed Cursor */}
+      <Cursor cursorState={cursorState} cursorText={cursorText} />
+
+      {/* Architectural Wayfinding Navigation */}
+      <Navigation
+        currentChapter={CHAPTERS[activeChapterIndex]}
+        activeChapterIndex={activeChapterIndex}
+        chapters={CHAPTERS}
+        onSelectChapter={scrollToSection}
+        onOpenInquiry={() => setIsInquiryOpen(true)}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
+        setCursorState={setCursor}
+      />
+
+      {/* MAIN DIGITAL ENVIRONMENT: 7 CONNECTED PHYSICAL CHAPTERS */}
       <main className="relative z-10">
-        {/* SECTION 02: Hero Viewport */}
-        <HeroSection
-          onOpenContact={() => setIsContactOpen(true)}
-          onExploreWork={handleScrollToWork}
+        {/* CHAPTER 01 — ARRIVAL (Threshold, concrete, blackened steel, doorway light) */}
+        <Chapter01Arrival
+          setCursorState={setCursor}
+          onExplore={() => scrollToSection('reveal')}
         />
 
-        {/* SECTION 03: Social Proof / Industry Category Marks */}
-        <SocialProofSection />
+        {/* CHAPTER 02 — REVEAL (Paper, plaster, drafting tables, diffuse light) */}
+        <Chapter02Reveal
+          setCursorState={setCursor}
+          onSelectWork={() => scrollToSection('work')}
+        />
 
-        {/* SECTION 04: Selected Work (6 Featured Client Flagships) */}
-        <SelectedWorkSection
+        {/* CHAPTER 03 — WORK (Charcoal wall, stone floor, 3D plinths, gallery spotlights) */}
+        <Chapter03Work
           onSelectProject={(proj) => setSelectedProject(proj)}
+          setCursorState={setCursor}
+          onProceedToSystem={() => scrollToSection('system')}
+          onHoverProject={(idx) => setHoveredProjectIndex(idx)}
         />
 
-        {/* Sticky Case Study Evolution (Wireframe -> Design System -> Mobile -> Live Telemetry) */}
-        <ProjectStickyTransition />
-
-        {/* SECTION 05: Services Interactive Showcase with Tone-Shift Accent Glows */}
-        <ServicesSection
-          onOpenContact={() => setIsContactOpen(true)}
+        {/* CHAPTER 04 — SYSTEM (Machine room, 5 physical actuated 3D plates, overhead workshop lamp) */}
+        <Chapter04System
+          setCursorState={setCursor}
+          onProceedToStudio={() => scrollToSection('studio')}
+          onSelectLayerIndex={(idx) => setActiveSystemLayerIndex(idx)}
         />
 
-        {/* SECTION 06: SaaS Development Deep Dive */}
-        <SaaSShowcaseSection />
+        {/* CHAPTER 05 — STUDIO (Warm intimate atelier, oiled oak, books, desk lamp, material proofs) */}
+        <Chapter05Studio
+          setCursorState={setCursor}
+          onProceedToApproach={() => scrollToSection('approach')}
+        />
 
-        {/* SECTION 07: Web Development Layered 3D Browser Mockups */}
-        <WebShowcaseSection />
+        {/* CHAPTER 06 — APPROACH (Physical process pin-up wall, tracing paper, margin notes) */}
+        <Chapter06Approach
+          setCursorState={setCursor}
+          onProceedToInvitation={() => scrollToSection('invitation')}
+        />
 
-        {/* SECTION 08: Mobile App Development 3D Tilted Phones */}
-        <MobileShowcaseSection />
-
-        {/* SECTION 09: Video Editing NLE Timeline Showcase */}
-        <VideoShowcaseSection />
-
-        {/* SECTION 10: UI/UX Design Systems, Tokens & Wireframes */}
-        <UIUXShowcaseSection />
-
-        {/* SECTION 11: Systematic 6-Step Process */}
-        <ProcessSection />
-
-        {/* SECTION 12: Technologies BUILDIFO Uses */}
-        <TechnologySection />
-
-        {/* SECTION 13: Why BUILDIFO - Key Agency Strengths */}
-        <WhyUsSection />
-
-        {/* SECTION 14: Statistics - Verified Impact Metrics with Count Up */}
-        <StatsSection />
-
-        {/* SECTION 15: Testimonials - Founder & Executive Endorsements */}
-        <TestimonialsSection />
-
-        {/* SECTION 16: About BUILDIFO - Story & Craft Precision */}
-        <AboutSection />
-
-        {/* SECTION 17: Frequently Asked Questions Accordion */}
-        <FAQSection />
-
-        {/* SECTION 18: Interactive Direct Project Intake Form */}
-        <ContactSection />
-
-        {/* SECTION 19: Final Bold High-Contrast CTA */}
-        <FinalCTASection
-          onOpenContact={() => setIsContactOpen(true)}
+        {/* CHAPTER 07 — INVITATION (Architectural opening, glass, daylight exit, "LET'S BUILD SOMETHING.") */}
+        <Chapter07Invitation
+          onOpenInquiry={() => setIsInquiryOpen(true)}
+          setCursorState={setCursor}
+          onReturnToStart={() => scrollToSection('arrival')}
         />
       </main>
 
-      {/* SECTION 20: Footer with Global Hub Clocks & Navigation */}
-      <Footer />
-
-      {/* Interactive Project Case Study Modal */}
+      {/* Curator Exhibition Dossier Modal */}
       <ProjectModal
         project={selectedProject}
         onClose={() => setSelectedProject(null)}
-        onOpenContact={() => {
-          setSelectedProject(null);
-          setIsContactOpen(true);
-        }}
+        setCursorState={setCursor}
       />
 
-      {/* Interactive Multi-Step Project Inquiry Modal */}
-      <StartProjectModal
-        isOpen={isContactOpen}
-        onClose={() => setIsContactOpen(false)}
+      {/* Studio Commission Inquiry Drawer */}
+      <ContactDrawer
+        isOpen={isInquiryOpen}
+        onClose={() => setIsInquiryOpen(false)}
+        setCursorState={setCursor}
       />
-
-      {/* Interactive Master Animation Flow HUD Navigator */}
-      <MotionHUD />
-
     </div>
   );
 }
